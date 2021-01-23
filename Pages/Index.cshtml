@@ -1,0 +1,116 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<table class="table table-bordered table-condensed" style="margin-top: 30px;">
+    <thead>
+        <tr>
+            <th colspan="3">URL</th>
+        </tr>
+    </thead>
+    <tbody id="links">
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+
+    // https://stackoverflow.com/a/7228322/185045
+    function randomIntFromInterval(min,max)
+    {
+        return Math.floor(Math.random()*(max-min+1)+min);
+    }
+
+    $(function() {
+
+        var links = [
+            {
+                set: "Question Set 1",
+                root: 'Q1',
+                methods: [
+                    'AllCitiesStartingWith/Y',
+                    'AllCitiesStartingWith/G',
+                    'CitiesWithPopulationOver?population=500000',
+                    'CitiesWithPopulationOver?population=1000000',
+                    'AllCitiesThatIncludeTheLetter/z',
+                    'AllCitiesThatIncludeTheLetter/x',
+                    'AllCitiesInState/WY',
+                    'AllCitiesInState/SD',
+                    'CitiesSortedByNameAndState?page=1&resultsPerPage=25',
+                    'CitiesSortedByNameAndState?page=150&resultsPerPage=10',
+                ]
+            },
+            {
+                set: "Question Set 2",
+                root: 'Q2',
+                methods: [
+                    '12',
+                    '46',
+                    'CityWithTheLongestName',
+                    'CityWithTheShortestName',
+                    'CityWithTheLargestPopulation',
+                    'CityWithTheLargestPopulation/OH',
+                    'CityWithTheLargestPopulation/WV',
+                    'CityWithTheLowestPopulation'
+                ]
+            },
+            {
+                set: "Question Set 3",
+                root: 'Q3',
+                methods: [
+                    'TotalPopulationInAllCities',
+                    'AveragePopulationAccrossAllCities',
+                    'AveragePopulationInState/OH',
+                    'AveragePopulationInState/CA',
+                    'CountOfAllCitiesWithPopulationLessThan?population=50000',
+                    'CountOfAllCitiesWithPopulationLessThan?population=60000',
+                    'StateWithMostCities'
+                ]
+            }
+        ];
+
+
+        $.each(links, function(i, grp) {
+            $("#links").append('<tr class="bg-info"><th>' + grp.set + "</th><th>Expected Data<th>Success</th></tr>");
+            $.each(grp.methods, function(idx, item) {
+                var url = '/api/' + grp.root + '/' + item;
+                var key = grp.root + idx;
+                $('#links').append('<tr><td><a target="_blank" href="' + url + '">' + url + '</a></td><td><a target="_blank" href="https://is7012.azurewebsites.net' + url + '">view</a></td><td class="text-center" id="' + key + '"><i class="glyphicon glyphicon-refresh glyphicon-spin"></i></td></tr>');
+
+
+                setTimeout(function() {
+                    $.ajax({
+                        method: 'GET',
+                        url: url,
+                        dataType: 'text',
+                        statusCode: {
+                            400: function() {
+                                $("#" + key).html('<i class="glyphicon glyphicon-remove text-warning"></i>');
+                            },
+                            200: function(data, status, xhr) {
+                                $.get("https://is7012.azurewebsites.net" + url, function(answer,status,answerXhr) {
+                                    if (xhr.responseText == answerXhr.responseText) {
+                                        $("#" + key).html('<i class="glyphicon glyphicon-ok text-success"></i>').parent().addClass("success");
+                                    } else {
+                                        $("#" + key).html('<i class="glyphicon glyphicon-remove text-warning"></i>').parent().addClass("warning");
+                                    }
+                                });
+                                
+                            },
+                            404: function() {
+                                $("#" + key).html('<i class="glyphicon glyphicon-remove text-danger"></i> 404');
+                            },
+                            500: function() {
+                                $("#" + key).html('<i class="glyphicon glyphicon-remove text-danger"></i> 500');
+                            }
+                        }
+                    });
+                }, randomIntFromInterval(50, 2000));
+            });
+        });
+        
+    });
+</script>
+}
